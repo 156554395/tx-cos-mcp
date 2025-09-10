@@ -1,0 +1,41 @@
+# 环境文件
+.env*
+
+# 开发文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 测试文件
+test*
+spec*
+__tests__/
+
+# 文档
+*.md
+!README.md
+CONTRIBUTING.md
+IDE_SETUP.md
+
+# Git相关
+.git/
+.gitignore
+
+# 日志
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+
+# 文档生成工具文件
+docs/
+examples/
+
+# 项目开发相关
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

@@ -1,0 +1,40 @@
+{
+  "name": "tx-cos-mcp",
+  "version": "1.0.1",
+  "description": "腾讯云COS MCP服务器 - 基于Node.js的Model Context Protocol服务器，提供腾讯云对象存储服务功能",
+  "main": "index.js",
+  "bin": {
+    "tx-cos-mcp": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "npx @modelcontextprotocol/inspector node index.js",
+    "publish": "npm publish --access public"
+  },
+  "keywords": [
+    "mcp",
+    "tencent",
+    "cos",
+    "oss",
+    "upload",
+    "model-context-protocol",
+    "tencent-cloud",
+    "object-storage"
+  ],
+  "author": "156554395@qq.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/156554395/tx-cos-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/156554395/tx-cos-mcp/issues"
+  },
+  "homepage": "https://github.com/156554395/tx-cos-mcp#readme",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "cos-nodejs-sdk-v5": "^2.15.4"
+  }
+}
