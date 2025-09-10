@@ -1,6 +1,6 @@
 {
   "name": "tx-cos-mcp",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "腾讯云COS MCP服务器 - 基于Node.js的Model Context Protocol服务器，提供腾讯云对象存储服务功能",
   "main": "index.js",
   "bin": {
@@ -10,7 +10,7 @@
     "start": "node index.js",
     "dev": "node index.js",
     "debug": "npx @modelcontextprotocol/inspector node index.js",
-    "publish": "npm publish --access public"
+    "publish:npm": "npm publish --access public"
   },
   "keywords": [
     "mcp",
