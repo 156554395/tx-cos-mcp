@@ -14,14 +14,23 @@ cd tx-cos-mcp
 2. 安装依赖
 
 ```bash
-npm install
+pnpm install
 ```
 
 3. 创建.env 文件并配置您的腾讯云 COS 凭证
 
 ```bash
-cp .env.example .env
-# 编辑.env文件填入您的配置
+# 配置环境变量
+export COS_SECRET_ID=your-secret-id
+export COS_SECRET_KEY=your-secret-key
+export COS_REGION=your-region
+export COS_BUCKET=your-bucket
+export COS_DOMAIN=your-custom-domain.com
+```
+
+# 启动调试服务器
+```bash
+pnpm inspector
 ```
 
 ## 代码规范
@@ -57,12 +66,12 @@ cp .env.example .env
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 打开 Pull Request
 
-## 测试
+## 调试
 
 确保添加测试用例：
 
 ```bash
-npm test
+pnpm test
 ```
 
 ## 许可证

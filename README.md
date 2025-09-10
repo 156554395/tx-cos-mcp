@@ -30,7 +30,7 @@ export COS_BUCKET=your-bucket
 export COS_DOMAIN=your-custom-domain.com
 
 # 启动调试服务器
-pnpm debug
+pnpm inspector
 ```
 
 ## 环境配置
@@ -50,7 +50,8 @@ pnpm debug
     "COS_SECRET_KEY": "your-secret-key",
     "COS_REGION": "your-region",
     "COS_BUCKET": "your-bucket",
-    "COS_DOMAIN": "your-custom-domain.com"
+    "COS_DOMAIN": "your-custom-domain.com",
+    "transportType": "stdio"
   }
 }
 ```
@@ -154,7 +155,8 @@ pnpm debug
         "COS_REGION": "your-region",
         "COS_BUCKET": "your-bucket",
         "COS_DOMAIN": "your-custom-domain.com"
-      }
+      },
+      "transportType": "stdio"
     }
   }
 }
