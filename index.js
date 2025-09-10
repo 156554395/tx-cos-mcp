@@ -223,16 +223,19 @@ function validateFileExists(filePath) {
 
 // 启动服务器
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('腾讯云COS MCP服务器已启动');
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
+  try {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error('腾讯云COS MCP服务器已启动');
+  } catch (error) {
     console.error('服务器启动失败:', error);
     process.exit(1);
-  });
+  }
+}
+
+// 检查是否直接运行此文件
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+  main();
 }
 
 export default server;

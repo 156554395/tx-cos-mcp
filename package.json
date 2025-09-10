@@ -9,17 +9,17 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "test": "npx @modelcontextprotocol/inspector node index.js",
+    "debug": "npx @modelcontextprotocol/inspector node index.js",
     "publish": "npm publish --access public"
   },
   "keywords": [
     "mcp",
-    "tencent",
+    "tx",
     "cos",
     "oss",
     "upload",
     "model-context-protocol",
-    "tencent-cloud",
+    "tx-cos-mcp",
     "object-storage"
   ],
   "author": "156554395@qq.com",

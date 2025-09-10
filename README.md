@@ -30,7 +30,7 @@ export COS_BUCKET=your-bucket
 export COS_DOMAIN=your-custom-domain.com
 
 # 启动调试服务器
-pnpm test
+pnpm debug
 ```
 
 ## 环境配置

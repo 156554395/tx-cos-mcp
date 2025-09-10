@@ -1,20 +1,30 @@
 import COS from 'cos-nodejs-sdk-v5';
 import path from 'path';
 import fs from 'fs/promises';
-import { cosConfig, validateConfig } from './config.js';
-
-validateConfig();
+import { cosConfig, hasValidConfig } from './config.js';
 
 class TencentCOSService {
   constructor() {
-    this.cos = new COS({
-      SecretId: cosConfig.SecretId,
-      SecretKey: cosConfig.SecretKey
-    });
+    this.configValid = hasValidConfig();
+    
+    if (this.configValid) {
+      this.cos = new COS({
+        SecretId: cosConfig.SecretId,
+        SecretKey: cosConfig.SecretKey
+      });
+    }
     this.config = cosConfig;
   }
 
+  _checkConfig() {
+    if (!this.configValid) {
+      throw new Error('COS配置无效，请检查环境变量设置');
+    }
+  }
+
   async uploadFile(localPath, { key = null, customDomain = null } = {}) {
+    this._checkConfig();
+    
     try {
       // 读取文件
       const buffer = await fs.readFile(localPath);
@@ -70,6 +80,8 @@ class TencentCOSService {
   }
 
   async getSignedUrl(key, expireTime = 3600) {
+    this._checkConfig();
+    
     try {
       const params = {
         Bucket: this.config.Bucket,
@@ -87,6 +99,8 @@ class TencentCOSService {
   }
 
   async listObjects(prefix = '') {
+    this._checkConfig();
+    
     try {
       const params = {
         Bucket: this.config.Bucket,
@@ -108,6 +122,8 @@ class TencentCOSService {
   }
 
   async deleteObject(key) {
+    this._checkConfig();
+    
     try {
       const params = {
         Bucket: this.config.Bucket,
