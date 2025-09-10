@@ -226,15 +226,18 @@ async function main() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error('腾讯云COS MCP服务器已启动');
+    // 只在调试模式下输出启动信息，避免干扰 MCP 协议通信
+    if (process.env.MCP_DEBUG) {
+      console.error('腾讯云COS MCP服务器已启动');
+    }
   } catch (error) {
     console.error('服务器启动失败:', error);
     process.exit(1);
   }
 }
 
-// 检查是否直接运行此文件
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+// 检查是否直接运行此文件或通过 npx/bin 调用
+if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1].endsWith('tx-cos-mcp')) {
   main();
 }
 
