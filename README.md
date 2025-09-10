@@ -185,7 +185,7 @@ COS_SECRET_ID=xxx COS_SECRET_KEY=xxx COS_REGION=your-region COS_BUCKET=test npx 
 npm run dev
 
 # 发布到npm (维护者)
-npm run publish
+npm run publish:npm
 ```
 
 ## 开发指南
