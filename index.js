@@ -111,6 +111,143 @@ const tools = {
       },
       required: ['object_key']
     }
+  },
+  copy_object: {
+    name: 'copy_object',
+    description: '复制COS中的对象',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        source_key: {
+          type: 'string',
+          description: '源对象键名'
+        },
+        target_key: {
+          type: 'string',
+          description: '目标对象键名'
+        },
+        target_bucket: {
+          type: 'string',
+          description: '目标存储桶名称（可选，默认为当前存储桶）'
+        }
+      },
+      required: ['source_key', 'target_key']
+    }
+  },
+  move_object: {
+    name: 'move_object',
+    description: '移动COS中的对象',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        source_key: {
+          type: 'string',
+          description: '源对象键名'
+        },
+        target_key: {
+          type: 'string',
+          description: '目标对象键名'
+        },
+        target_bucket: {
+          type: 'string',
+          description: '目标存储桶名称（可选，默认为当前存储桶）'
+        }
+      },
+      required: ['source_key', 'target_key']
+    }
+  },
+  rename_object: {
+    name: 'rename_object',
+    description: '重命名COS中的对象',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        old_key: {
+          type: 'string',
+          description: '原对象键名'
+        },
+        new_key: {
+          type: 'string',
+          description: '新对象键名'
+        }
+      },
+      required: ['old_key', 'new_key']
+    }
+  },
+  delete_multiple: {
+    name: 'delete_multiple',
+    description: '批量删除COS中的对象',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        object_keys: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          description: '要删除的对象键名数组'
+        }
+      },
+      required: ['object_keys']
+    }
+  },
+  create_folder: {
+    name: 'create_folder',
+    description: '在COS中创建文件夹',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        folder_path: {
+          type: 'string',
+          description: '文件夹路径'
+        }
+      },
+      required: ['folder_path']
+    }
+  },
+  delete_folder: {
+    name: 'delete_folder',
+    description: '删除COS中的文件夹',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        folder_path: {
+          type: 'string',
+          description: '文件夹路径'
+        },
+        recursive: {
+          type: 'boolean',
+          description: '是否递归删除（删除文件夹及其所有内容），默认false'
+        }
+      },
+      required: ['folder_path']
+    }
+  },
+  list_folders: {
+    name: 'list_folders',
+    description: '列出COS中的文件夹和文件',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        prefix: {
+          type: 'string',
+          description: '路径前缀，默认为根目录'
+        }
+      }
+    }
+  },
+  get_folder_stats: {
+    name: 'get_folder_stats',
+    description: '获取文件夹统计信息',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        folder_path: {
+          type: 'string',
+          description: '文件夹路径，为空则统计整个存储桶'
+        }
+      }
+    }
   }
 };
 
@@ -190,6 +327,100 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: JSON.stringify({ success: true, data: deleteResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'copy_object':
+        const copyResult = await cosService.copyObject(args.source_key, args.target_key, {
+          targetBucket: args.target_bucket
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: copyResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'move_object':
+        const moveResult = await cosService.moveObject(args.source_key, args.target_key, {
+          targetBucket: args.target_bucket
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: moveResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'rename_object':
+        const renameResult = await cosService.renameObject(args.old_key, args.new_key);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: renameResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'delete_multiple':
+        const batchDeleteResult = await cosService.deleteMultipleObjects(args.object_keys);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: batchDeleteResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'create_folder':
+        const createFolderResult = await cosService.createFolder(args.folder_path);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: createFolderResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'delete_folder':
+        const deleteFolderResult = await cosService.deleteFolder(args.folder_path, {
+          recursive: args.recursive || false
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: deleteFolderResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'list_folders':
+        const listFoldersResult = await cosService.listFolders(args.prefix || '');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: listFoldersResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'get_folder_stats':
+        const folderStatsResult = await cosService.getFolderStats(args.folder_path || '');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: folderStatsResult }, null, 2)
             }
           ]
         };
