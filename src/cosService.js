@@ -3,7 +3,14 @@ import path from 'path';
 import fs from 'fs/promises';
 import { cosConfig, hasValidConfig } from './config.js';
 
+/**
+ * 腾讯云COS服务封装类
+ * 提供文件上传、下载、管理等操作的统一接口
+ */
 class TencentCOSService {
+  /**
+   * 构造函数 - 初始化COS服务实例
+   */
   constructor() {
     this.configValid = hasValidConfig();
     
@@ -16,12 +23,26 @@ class TencentCOSService {
     this.config = cosConfig;
   }
 
+  /**
+   * 检查COS配置是否有效
+   * @throws {Error} 当配置无效时抛出错误
+   * @private
+   */
   _checkConfig() {
     if (!this.configValid) {
       throw new Error('COS配置无效，请检查环境变量设置');
     }
   }
 
+  /**
+   * 上传单个文件到COS
+   * @param {string} localPath - 本地文件路径
+   * @param {Object} options - 上传选项
+   * @param {string} [options.key] - COS中的对象键，不提供则使用文件名
+   * @param {string} [options.customDomain] - 自定义访问域名
+   * @returns {Promise<Object>} 上传结果，包含URL、键名、ETag等信息
+   * @throws {Error} 上传失败时抛出错误
+   */
   async uploadFile(localPath, { key = null, customDomain = null } = {}) {
     this._checkConfig();
     
@@ -60,6 +81,13 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 批量上传多个文件到COS
+   * @param {Array<Object>} files - 文件数组
+   * @param {string} files[].path - 文件本地路径
+   * @param {string} [files[].key] - COS中的对象键
+   * @returns {Promise<Array>} 上传结果数组，每个结果包含成功状态和详细信息
+   */
   async uploadMultipleFiles(files = []) {
     const results = [];
     
@@ -79,6 +107,13 @@ class TencentCOSService {
     return results;
   }
 
+  /**
+   * 获取对象的临时签名URL
+   * @param {string} key - COS对象键
+   * @param {number} [expireTime=3600] - URL有效期（秒），默认1小时
+   * @returns {Promise<Object>} 包含临时URL的结果对象
+   * @throws {Error} 获取失败时抛出错误
+   */
   async getSignedUrl(key, expireTime = 3600) {
     this._checkConfig();
     
@@ -98,6 +133,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 列出存储桶中的对象
+   * @param {string} [prefix=''] - 对象键前缀过滤
+   * @returns {Promise<Object>} 包含文件列表的结果对象
+   * @throws {Error} 列举失败时抛出错误
+   */
   async listObjects(prefix = '') {
     this._checkConfig();
     
@@ -121,6 +162,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 删除单个对象
+   * @param {string} key - 要删除的对象键
+   * @returns {Promise<Object>} 删除结果
+   * @throws {Error} 删除失败时抛出错误
+   */
   async deleteObject(key) {
     this._checkConfig();
     
@@ -138,6 +185,15 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 复制COS对象
+   * @param {string} sourceKey - 源对象键
+   * @param {string} targetKey - 目标对象键
+   * @param {Object} [options] - 复制选项
+   * @param {string} [options.targetBucket] - 目标存储桶，不指定则为当前存储桶
+   * @returns {Promise<Object>} 复制结果，包含新对象的URL和元数据
+   * @throws {Error} 复制失败时抛出错误
+   */
   async copyObject(sourceKey, targetKey, { targetBucket = null } = {}) {
     this._checkConfig();
     
@@ -169,6 +225,15 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 移动COS对象（复制+删除原文件）
+   * @param {string} sourceKey - 源对象键
+   * @param {string} targetKey - 目标对象键
+   * @param {Object} [options] - 移动选项
+   * @param {string} [options.targetBucket] - 目标存储桶，不指定则为当前存储桶
+   * @returns {Promise<Object>} 移动结果，包含新对象的URL和元数据
+   * @throws {Error} 移动失败时抛出错误
+   */
   async moveObject(sourceKey, targetKey, { targetBucket = null } = {}) {
     this._checkConfig();
     
@@ -192,6 +257,13 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 重命名COS对象（基于移动操作实现）
+   * @param {string} oldKey - 原对象键
+   * @param {string} newKey - 新对象键
+   * @returns {Promise<Object>} 重命名结果
+   * @throws {Error} 重命名失败时抛出错误
+   */
   async renameObject(oldKey, newKey) {
     this._checkConfig();
     
@@ -212,6 +284,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 批量删除多个COS对象
+   * @param {Array<string>} keys - 要删除的对象键数组
+   * @returns {Promise<Object>} 批量删除结果，包含成功和失败的对象列表
+   * @throws {Error} 批量删除失败时抛出错误
+   */
   async deleteMultipleObjects(keys = []) {
     this._checkConfig();
     
@@ -242,6 +320,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 创建文件夹（在COS中创建以"/"结尾的空对象）
+   * @param {string} folderPath - 文件夹路径
+   * @returns {Promise<Object>} 创建结果
+   * @throws {Error} 创建失败时抛出错误
+   */
   async createFolder(folderPath) {
     this._checkConfig();
     
@@ -268,6 +352,14 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 删除文件夹
+   * @param {string} folderPath - 文件夹路径
+   * @param {Object} [options] - 删除选项
+   * @param {boolean} [options.recursive=false] - 是否递归删除文件夹内的所有内容
+   * @returns {Promise<Object>} 删除结果
+   * @throws {Error} 删除失败时抛出错误
+   */
   async deleteFolder(folderPath, { recursive = false } = {}) {
     this._checkConfig();
     
@@ -308,6 +400,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 以文件夹视图列出COS内容，区分文件夹和文件
+   * @param {string} [prefix=''] - 路径前缀
+   * @returns {Promise<Object>} 包含文件夹和文件列表的结果
+   * @throws {Error} 列举失败时抛出错误
+   */
   async listFolders(prefix = '') {
     this._checkConfig();
     
@@ -334,6 +432,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 获取文件夹统计信息，包括文件数量、总大小、文件类型分布等
+   * @param {string} [folderPath] - 文件夹路径，为空则统计整个存储桶
+   * @returns {Promise<Object>} 包含详细统计信息的结果
+   * @throws {Error} 获取统计失败时抛出错误
+   */
   async getFolderStats(folderPath) {
     this._checkConfig();
     
@@ -374,6 +478,12 @@ class TencentCOSService {
     }
   }
 
+  /**
+   * 格式化文件大小为人类可读的字符串
+   * @param {number} bytes - 字节数
+   * @returns {string} 格式化后的大小字符串（如"1.5 MB"）
+   * @private
+   */
   _formatFileSize(bytes) {
     if (bytes === 0) return '0 B';
     

@@ -1,5 +1,21 @@
 #!/usr/bin/env node
 
+/**
+ * TX-COS-MCP 服务器主入口文件
+ * 基于 Model Context Protocol (MCP) 的腾讯云 COS 服务器实现
+ * 
+ * 提供以下功能：
+ * - 文件上传（单个/批量）
+ * - 文件操作（复制/移动/重命名）
+ * - 文件删除（单个/批量）
+ * - 文件夹管理（创建/删除/列举）
+ * - 存储统计分析
+ * - 临时URL生成
+ * 
+ * @author 156554395@qq.com
+ * @version 1.1.0
+ */
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -9,6 +25,7 @@ import {
 import fs from 'fs';
 import { cosService } from './src/cosService.js';
 
+// 创建MCP服务器实例
 const server = new Server(
   {
     name: 'tx-cos-mcp',
@@ -21,8 +38,12 @@ const server = new Server(
   }
 );
 
-// 定义MCP工具
+/**
+ * MCP工具定义
+ * 每个工具对应一个COS操作功能，包含名称、描述和输入参数架构
+ */
 const tools = {
+  // 文件上传工具
   upload_file: {
     name: 'upload_file',
     description: '上传单个文件到腾讯云COS',
@@ -67,6 +88,8 @@ const tools = {
       required: ['files']
     }
   },
+  
+  // URL工具
   get_signed_url: {
     name: 'get_signed_url',
     description: '获取COS对象的临时签名URL',
@@ -85,6 +108,8 @@ const tools = {
       required: ['object_key']
     }
   },
+  
+  // 列表和查询工具
   list_objects: {
     name: 'list_objects',
     description: '列出COS中的对象',
@@ -98,6 +123,8 @@ const tools = {
       }
     }
   },
+  
+  // 删除工具
   delete_object: {
     name: 'delete_object',
     description: '删除COS中的对象',
@@ -112,6 +139,8 @@ const tools = {
       required: ['object_key']
     }
   },
+  
+  // 文件操作工具
   copy_object: {
     name: 'copy_object',
     description: '复制COS中的对象',
@@ -174,6 +203,8 @@ const tools = {
       required: ['old_key', 'new_key']
     }
   },
+  
+  // 批量操作工具
   delete_multiple: {
     name: 'delete_multiple',
     description: '批量删除COS中的对象',
@@ -191,6 +222,8 @@ const tools = {
       required: ['object_keys']
     }
   },
+  
+  // 文件夹管理工具
   create_folder: {
     name: 'create_folder',
     description: '在COS中创建文件夹',
@@ -236,6 +269,8 @@ const tools = {
       }
     }
   },
+  
+  // 统计分析工具
   get_folder_stats: {
     name: 'get_folder_stats',
     description: '获取文件夹统计信息',
@@ -251,17 +286,29 @@ const tools = {
   }
 };
 
-// 处理工具列表请求
+/**
+ * 注册MCP工具列表请求处理器
+ * 返回所有可用工具的定义
+ */
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: Object.values(tools),
 }));
 
-// 处理工具调用请求
+/**
+ * 注册MCP工具调用请求处理器
+ * 根据工具名称执行相应的COS操作
+ * 
+ * @param {Object} request - MCP请求对象
+ * @param {string} request.params.name - 工具名称
+ * @param {Object} request.params.arguments - 工具参数
+ * @returns {Promise<Object>} 工具执行结果
+ */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
     switch (name) {
+      // 文件上传操作
       case 'upload_file':
         validateFileExists(args.file_path);
         const result = await cosService.uploadFile(args.file_path, {
@@ -278,6 +325,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
 
       case 'upload_multiple':
+        // 验证所有文件是否存在
         const uploadPromises = args.files.map(async (file) => {
           validateFileExists(file.file_path);
           return {
@@ -298,6 +346,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // URL工具操作
       case 'get_signed_url':
         const urlResult = await cosService.getSignedUrl(args.object_key, args.expire_time);
         return {
@@ -309,6 +358,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // 列表和查询操作
       case 'list_objects':
         const listResult = await cosService.listObjects(args.prefix || '');
         return {
@@ -320,6 +370,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // 删除操作
       case 'delete_object':
         const deleteResult = await cosService.deleteObject(args.object_key);
         return {
@@ -331,6 +382,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // 文件操作
       case 'copy_object':
         const copyResult = await cosService.copyObject(args.source_key, args.target_key, {
           targetBucket: args.target_bucket
@@ -368,6 +420,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // 批量操作
       case 'delete_multiple':
         const batchDeleteResult = await cosService.deleteMultipleObjects(args.object_keys);
         return {
@@ -379,6 +432,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // 文件夹管理操作
       case 'create_folder':
         const createFolderResult = await cosService.createFolder(args.folder_path);
         return {
@@ -414,6 +468,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
+      // 统计分析操作
       case 'get_folder_stats':
         const folderStatsResult = await cosService.getFolderStats(args.folder_path || '');
         return {
@@ -429,6 +484,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error(`未知工具: ${name}`);
     }
   } catch (error) {
+    // 统一错误处理，返回错误信息
     return {
       content: [
         {
@@ -441,6 +497,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
+/**
+ * 验证本地文件是否存在
+ * @param {string} filePath - 文件路径
+ * @throws {Error} 当文件不存在或路径不是文件时抛出错误
+ */
 function validateFileExists(filePath) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`文件不存在: ${filePath}`);
@@ -452,7 +513,10 @@ function validateFileExists(filePath) {
   }
 }
 
-// 启动服务器
+/**
+ * 服务器主函数 - 启动MCP服务器
+ * 使用标准输入输出传输进行通信
+ */
 async function main() {
   try {
     const transport = new StdioServerTransport();
@@ -467,9 +531,14 @@ async function main() {
   }
 }
 
-// 检查是否直接运行此文件或通过 npx/bin 调用
+/**
+ * 程序入口点检查
+ * 检查是否直接运行此文件或通过 npx/bin 调用
+ * 如果是，则启动服务器
+ */
 if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1].endsWith('tx-cos-mcp')) {
   main();
 }
 
+// 导出服务器实例供其他模块使用
 export default server;

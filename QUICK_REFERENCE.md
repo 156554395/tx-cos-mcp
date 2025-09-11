@@ -18,58 +18,33 @@
 | `get_folder_stats` | 文件夹统计 | - | `folder_path` |
 | `get_signed_url` | 临时URL | `object_key` | `expire_time` |
 
-## 📝 常用示例
 
-### 文件上传
-```json
-// 单文件上传
-{"file_path": "/path/to/file.jpg", "object_key": "images/file.jpg"}
+## 实用提示词示例
 
-// 批量上传
-{"files": [{"file_path": "/path/file1.jpg"}, {"file_path": "/path/file2.jpg"}]}
-```
+### 文件上传相关：
 
-### 文件操作
-```json
-// 复制文件
-{"source_key": "images/old.jpg", "target_key": "backup/old.jpg"}
+- 请帮我上传这个文件到COS：/path/to/myfile.jpg
+- 批量上传这几个文件到examples文件夹：file1.txt, file2.pdf, file3.png
+- 上传文件并指定对象键名为photos/2024/avatar.jpg
+- 将img目录下的文件全部上传到cos
 
-// 移动文件
-{"source_key": "temp/file.jpg", "target_key": "images/file.jpg"}
+### 文件访问相关：
 
-// 重命名文件
-{"old_key": "IMG_001.jpg", "new_key": "sunset.jpg"}
-```
+- 获取文件document.pdf的临时下载链接，有效期1小时
+- 为图片image.jpg生成30分钟有效的分享链接
 
-### 删除操作
-```json
-// 删除单个文件
-{"object_key": "temp/file.jpg"}
+### 文件管理相关：
 
-// 批量删除
-{"object_keys": ["temp/file1.jpg", "temp/file2.jpg"]}
-```
+- 列出COS中所有在uploads/文件夹下的文件
+- 删除旧版本的backup/data.json文件
+- 查看当前COS存储桶中有哪些文件
 
-### 文件夹操作
-```json
-// 创建文件夹
-{"folder_path": "images/2024"}
+### 实际业务场景：
 
-// 删除文件夹（递归）
-{"folder_path": "old_data", "recursive": true}
-```
-
-### 查询操作
-```json
-// 列出文件
-{"prefix": "images/"}
-
-// 文件夹统计
-{"folder_path": "images"}
-
-// 生成临时URL（1小时）
-{"object_key": "private/file.pdf", "expire_time": 3600}
-```
+- 上传项目构建后的dist文件夹内容到static目录
+- 为用户头像生成临时访问链接用于前端显示
+- 清理test/目录下的所有测试文件
+- 获取COS中images/文件夹下的所有图片
 
 ## ⚡ 快速启动
 
