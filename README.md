@@ -47,7 +47,7 @@ pnpm inspector
 ```json
 {
   "command": "npx",
-  "args": ["-y", "tx-cos-mcp"],
+  "args": ["-y", "tx-cos-mcp@latest"],
   "env": {
     "COS_SECRET_ID": "your-secret-id",
     "COS_SECRET_KEY": "your-secret-key",
@@ -225,7 +225,7 @@ pnpm inspector
   "mcpServers": {
     "tx-cos-mcp": {
       "command": "npx",
-      "args": ["y", "tx-cos-mcp"],
+      "args": ["y", "tx-cos-mcp@latest"],
       "env": {
         "COS_SECRET_ID": "your-secret-id",
         "COS_SECRET_KEY": "your-secret-key",
