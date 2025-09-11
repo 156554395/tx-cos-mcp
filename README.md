@@ -50,9 +50,9 @@ pnpm inspector
     "COS_SECRET_KEY": "your-secret-key",
     "COS_REGION": "your-region",
     "COS_BUCKET": "your-bucket",
-    "COS_DOMAIN": "your-custom-domain.com",
-    "transportType": "stdio"
-  }
+    "COS_DOMAIN": "your-custom-domain.com"
+  },
+  "transportType": "stdio"
 }
 ```
 
