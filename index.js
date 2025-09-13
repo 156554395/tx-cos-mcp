@@ -13,7 +13,7 @@
  * - 临时URL生成
  * 
  * @author 156554395@qq.com
- * @version 1.1.0
+ * @version 1.2.0
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -68,7 +68,7 @@ const tools = {
   },
   upload_multiple: {
     name: 'upload_multiple',
-    description: '批量上传多个文件到腾讯云COS',
+    description: '批量上传多个文件到腾讯云COS，支持智能并发控制和重试机制',
     inputSchema: {
       type: 'object',
       properties: {
@@ -83,9 +83,109 @@ const tools = {
             required: ['file_path']
           },
           description: '文件数组，每个元素包含file_path和可选的object_key'
+        },
+        concurrency: {
+          type: 'number',
+          description: '并发上传数量，默认3，最大20'
+        },
+        max_retries: {
+          type: 'number',
+          description: '单个文件最大重试次数，默认3'
         }
       },
       required: ['files']
+    }
+  },
+
+  // 大文件分片上传工具
+  upload_large_file: {
+    name: 'upload_large_file',
+    description: '使用分片上传方式上传大文件到腾讯云COS，支持断点续传和进度监控',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file_path: {
+          type: 'string',
+          description: '本地文件路径'
+        },
+        object_key: {
+          type: 'string',
+          description: '上传后在COS中的对象键名，如果未提供则使用文件名'
+        },
+        custom_domain: {
+          type: 'string',
+          description: '自定义访问域名（可选）'
+        },
+        chunk_size: {
+          type: 'number',
+          description: '分片大小（字节），默认1MB，最小1MB'
+        },
+        concurrency: {
+          type: 'number',
+          description: '并发上传数量，默认3，最大10'
+        },
+        force_slice: {
+          type: 'boolean',
+          description: '强制使用分片上传，即使文件较小'
+        }
+      },
+      required: ['file_path']
+    }
+  },
+
+  // 上传进度管理工具
+  get_upload_progress: {
+    name: 'get_upload_progress',
+    description: '获取当前所有未完成上传的进度信息',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: '特定会话ID，不提供则返回所有未完成上传'
+        }
+      }
+    }
+  },
+
+  clear_upload_progress: {
+    name: 'clear_upload_progress',
+    description: '清理指定的上传进度记录',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: '要清理的会话ID'
+        }
+      },
+      required: ['session_id']
+    }
+  },
+
+  // 临时文件管理工具
+  manage_temp_files: {
+    name: 'manage_temp_files',
+    description: '管理临时文件和目录，支持清理和统计功能',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['stats', 'cleanup'],
+          description: '操作类型：stats(统计) 或 cleanup(清理)'
+        },
+        type: {
+          type: 'string',
+          enum: ['progress', 'cache', 'uploads', 'all'],
+          description: '文件类型，默认all'
+        },
+        older_than_days: {
+          type: 'number',
+          description: '清理多少天前的文件，默认7天'
+        }
+      },
+      required: ['action']
     }
   },
   
@@ -310,8 +410,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       // 文件上传操作
       case 'upload_file':
-        validateFileExists(args.file_path);
-        const result = await cosService.uploadFile(args.file_path, {
+        const cleanPath = validateFileExists(args.file_path);
+        const result = await cosService.uploadFile(cleanPath, {
           key: args.object_key,
           customDomain: args.custom_domain
         });
@@ -327,21 +427,95 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'upload_multiple':
         // 验证所有文件是否存在
         const uploadPromises = args.files.map(async (file) => {
-          validateFileExists(file.file_path);
+          const cleanFilePath = validateFileExists(file.file_path);
           return {
-            path: file.file_path,
+            path: cleanFilePath,
             key: file.object_key
           };
         });
 
         const validatedFiles = await Promise.all(uploadPromises);
-        const uploadResults = await cosService.uploadMultipleFiles(validatedFiles);
+
+        // 参数验证和默认值设置
+        const batchConcurrency = args.concurrency ? Math.min(20, Math.max(1, args.concurrency)) : 3;
+        const batchMaxRetries = args.max_retries ? Math.max(0, args.max_retries) : 3;
+
+        const uploadResults = await cosService.uploadMultipleFiles(validatedFiles, {
+          concurrency: batchConcurrency,
+          maxRetries: batchMaxRetries,
+          onProgress: (progress) => {
+            // 静默处理批量上传进度，避免污染MCP协议
+          }
+        });
 
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify({ success: true, data: uploadResults }, null, 2)
+            }
+          ]
+        };
+
+      case 'upload_large_file':
+        const cleanLargeFilePath = validateFileExists(args.file_path);
+
+        // 参数验证和默认值设置
+        const chunkSize = args.chunk_size ? Math.max(1024 * 1024, args.chunk_size) : 1024 * 1024; // 最小1MB
+        const concurrency = args.concurrency ? Math.min(10, Math.max(1, args.concurrency)) : 3; // 1-10之间
+
+        const largeFileResult = await cosService.uploadFile(cleanLargeFilePath, {
+          key: args.object_key,
+          customDomain: args.custom_domain,
+          useSliceUpload: args.force_slice || true,
+          chunkSize: chunkSize,
+          concurrency: concurrency,
+          onProgress: (progress) => {
+            // 这里不输出进度日志，避免污染MCP协议
+          }
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: largeFileResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'get_upload_progress':
+        const progressResult = await cosService.getUploadProgress(args.session_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: progressResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'clear_upload_progress':
+        const clearResult = await cosService.clearUploadProgress(args.session_id);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: clearResult }, null, 2)
+            }
+          ]
+        };
+
+      case 'manage_temp_files':
+        const tempResult = await cosService.manageTempFiles(args.action, {
+          type: args.type,
+          olderThanDays: args.older_than_days
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, data: tempResult }, null, 2)
             }
           ]
         };
@@ -503,14 +677,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
  * @throws {Error} 当文件不存在或路径不是文件时抛出错误
  */
 function validateFileExists(filePath) {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`文件不存在: ${filePath}`);
+  // 清理文件路径，去除首尾空白字符
+  const cleanPath = filePath.trim();
+
+  if (!cleanPath) {
+    throw new Error('文件路径不能为空');
   }
 
-  const stats = fs.statSync(filePath);
-  if (!stats.isFile()) {
-    throw new Error(`路径不是文件: ${filePath}`);
+  if (!fs.existsSync(cleanPath)) {
+    throw new Error(`文件不存在: ${cleanPath}`);
   }
+
+  const stats = fs.statSync(cleanPath);
+  if (!stats.isFile()) {
+    throw new Error(`路径不是文件: ${cleanPath}`);
+  }
+
+  // 返回清理后的路径，供后续使用
+  return cleanPath;
 }
 
 /**

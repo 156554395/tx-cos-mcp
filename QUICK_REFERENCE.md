@@ -5,7 +5,11 @@
 | 工具名称 | 功能 | 必需参数 | 可选参数 |
 |---------|------|---------|---------|
 | `upload_file` | 单文件上传 | `file_path` | `object_key`, `custom_domain` |
-| `upload_multiple` | 批量上传 | `files[]` | - |
+| `upload_multiple` | 批量上传 | `files[]` | `concurrency`, `max_retries` |
+| `upload_large_file` | 大文件分片上传 | `file_path` | `object_key`, `custom_domain`, `chunk_size`, `concurrency`, `force_slice` |
+| `get_upload_progress` | 获取上传进度 | - | `session_id` |
+| `clear_upload_progress` | 清理上传进度 | `session_id` | - |
+| `manage_temp_files` | 管理临时文件 | `action` | `type`, `older_than_days` |
 | `copy_object` | 复制对象 | `source_key`, `target_key` | `target_bucket` |
 | `move_object` | 移动对象 | `source_key`, `target_key` | `target_bucket` |
 | `rename_object` | 重命名对象 | `old_key`, `new_key` | - |

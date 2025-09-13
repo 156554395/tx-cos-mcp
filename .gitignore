@@ -109,3 +109,7 @@ dist
 # Temporary upload files
 *.tmp
 *.temp
+
+# TX-COS-MCP temporary files
+temp/
+.upload_progress/
