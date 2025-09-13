@@ -770,14 +770,16 @@ class TencentCOSService {
    */
   async copyObject(sourceKey, targetKey, { targetBucket = null } = {}) {
     this._checkConfig();
-    
+
     try {
       const sourceBucket = targetBucket || this.config.Bucket;
+      // 对sourceKey进行URL编码以支持中文字符
+      const encodedSourceKey = encodeURIComponent(sourceKey);
       const params = {
         Bucket: this.config.Bucket,
         Region: this.config.Region,
         Key: targetKey,
-        CopySource: `${sourceBucket}.cos.${this.config.Region}.myqcloud.com/${sourceKey}`
+        CopySource: `${sourceBucket}.cos.${this.config.Region}.myqcloud.com/${encodedSourceKey}`
       };
 
       const response = await this.cos.putObjectCopy(params);
