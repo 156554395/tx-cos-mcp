@@ -39,3 +39,6 @@ examples/
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+
+# TX-COS-MCP temporary files
+temp/
