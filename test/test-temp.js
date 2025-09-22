@@ -67,7 +67,7 @@ async function testTempDirManagement() {
 
     // 显示目录结构
     console.log('\n📁 临时目录结构：');
-    console.log('temp/');
+    console.log(`${TEMP_DIRS.ROOT}/`);
     console.log('├── progress/  (上传进度文件)');
     console.log('├── cache/     (缓存文件)');
     console.log('└── uploads/   (上传临时文件)');

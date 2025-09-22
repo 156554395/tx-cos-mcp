@@ -1,16 +1,26 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
 /**
  * 临时文件管理模块
  * 统一管理TX-COS-MCP的临时文件和目录
+ * 使用系统缓存目录而不是项目目录
  */
 
+// 获取系统缓存目录下的应用专属目录
+const getAppCacheDir = () => {
+  const systemTempDir = os.tmpdir();
+  return path.join(systemTempDir, 'tx-cos-mcp');
+};
+
+const APP_CACHE_ROOT = getAppCacheDir();
+
 export const TEMP_DIRS = {
-  ROOT: 'temp',
-  PROGRESS: path.join('temp', 'progress'),
-  CACHE: path.join('temp', 'cache'),
-  UPLOADS: path.join('temp', 'uploads')
+  ROOT: APP_CACHE_ROOT,
+  PROGRESS: path.join(APP_CACHE_ROOT, 'progress'),
+  CACHE: path.join(APP_CACHE_ROOT, 'cache'),
+  UPLOADS: path.join(APP_CACHE_ROOT, 'uploads')
 };
 
 /**
